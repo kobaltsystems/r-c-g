@@ -27,8 +27,9 @@ Servo servo1;
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 
 //global variables here
-  int Wall = 100;
-  int MaxSpeed = 175;
+  int Wall = 50;
+  int MaxSpeed = 160;
+  int i;
 
 void setup() {
   Serial.begin(115200);           // set up Serial library at 9600 bps
@@ -38,6 +39,9 @@ void setup() {
   
   // Attach a servo to pin #10
   servo1.attach(10);
+  servo1.write(90); // set servo to neutral
+   
+
    
 }
 
@@ -52,36 +56,53 @@ void SerialPrintStuff(int ToPrint) {
 
 // All sonar calcs to go here
 int FrontDistance(){
+  delay(35);                      // Wait 50ms between pings (about 20 pings/sec). 29ms should be the shortest delay between pings.
   unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds (uS)
-  
   int DistCM = (uS / US_ROUNDTRIP_CM);
-
-  if (DistCM == 0){
-    DistCM = 101;
-  }
-
-return DistCM;
+  return DistCM; // send back distance in CM
 
 }
 
 // Motor control stuff here
-void MoveForward(){
-  
+void MotorForward(){
+   myMotor->setSpeed(MaxSpeed);    
    myMotor->run(FORWARD);
-   myMotor->setSpeed(MaxSpeed);  
 }
 
+void MotorStop(){
+    myMotor->setSpeed(0);    
+    myMotor->run(RELEASE);
+    delay(1000);
+ }
+
+void Backward(){
+   servo1.write(130); // turn wheels right 
+   myMotor->setSpeed(MaxSpeed);    
+   myMotor->run(BACKWARD);
+   delay(2000);
+   servo1.write(90); 
+   MotorStop();   
+   TakeOffAgain();
+ }
+
+void TakeOffAgain(){
+   servo1.write(50); // turn wheels right 
+   myMotor->setSpeed(MaxSpeed);    
+   myMotor->run(FORWARD);
+   delay(2000);
+   servo1.write(90); 
+ }
 
 void loop() {
-  delay(50);                      // Wait 50ms between pings (about 20 pings/sec). 29ms should be the shortest delay between pings.
- 
-  if (FrontDistance() > Wall){ 
-       MoveForward();
+  
+  if (FrontDistance() <= Wall){ 
+       MotorStop();
+       Backward();
   }else{
-    myMotor->run(RELEASE);
+      MotorForward(); // default movement
   }
 
-// SerialPrintStuff(FrontDistance());
+ SerialPrintStuff(FrontDistance());
  
 
 }
