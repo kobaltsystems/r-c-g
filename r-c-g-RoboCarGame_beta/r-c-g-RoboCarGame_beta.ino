@@ -22,9 +22,13 @@ Servo servo1;
 // ping sensor setup
 #define TRIGGER_PIN  2  // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     3  // Arduino pin tied to echo pin on the ultrasonic sensor.
-#define MAX_DISTANCE 500 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
+#define MAX_DISTANCE 400 // Maximum distance we want to ping for (in centimeters). Maximum sensor distance is rated at 400-500cm.
 
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
+
+//global variables here
+  int Wall = 100;
+  int MaxSpeed = 175;
 
 void setup() {
   Serial.begin(115200);           // set up Serial library at 9600 bps
@@ -35,9 +39,6 @@ void setup() {
   // Attach a servo to pin #10
   servo1.attach(10);
    
-  // turn on motor M1
-  myMotor->setSpeed(200);
-  myMotor->run(RELEASE);
 }
 
 // Print data to serial for diagnostics
@@ -52,34 +53,35 @@ void SerialPrintStuff(int ToPrint) {
 // All sonar calcs to go here
 int FrontDistance(){
   unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds (uS)
+  
   int DistCM = (uS / US_ROUNDTRIP_CM);
+
   if (DistCM == 0){
-    DistCM = 21;
+    DistCM = 101;
   }
+
 return DistCM;
 
-  if (DistCM < 20){
-    return 1;
-  }else{
-    return 0;
-  }
 }
 
 // Motor control stuff here
-void RunMotor(int DistCM){
+void MoveForward(){
   
-  if (DistCM > 20){
-    myMotor->run(FORWARD);
-    myMotor->setSpeed(100);  
-  }else{
-    myMotor->run(RELEASE);
-  }
+   myMotor->run(FORWARD);
+   myMotor->setSpeed(MaxSpeed);  
 }
 
 
 void loop() {
   delay(50);                      // Wait 50ms between pings (about 20 pings/sec). 29ms should be the shortest delay between pings.
-  
- RunMotor(FrontDistance());
- SerialPrintStuff(FrontDistance());
+ 
+  if (FrontDistance() > Wall){ 
+       MoveForward();
+  }else{
+    myMotor->run(RELEASE);
+  }
+
+// SerialPrintStuff(FrontDistance());
+ 
+
 }
