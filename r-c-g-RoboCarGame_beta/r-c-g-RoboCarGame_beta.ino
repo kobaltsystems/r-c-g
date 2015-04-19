@@ -13,7 +13,7 @@
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 
-// And connect a DC motor to port M3
+// And connect a DC motor
 Adafruit_DCMotor *myMotor = AFMS.getMotor(1);
 
 // Servo library
@@ -28,20 +28,18 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
 
 //global variables here
   int Wall = 50;
-  int MaxSpeed = 160;
+  int MaxSpeed = 100;
   int i;
 
 void setup() {
-  Serial.begin(115200);           // set up Serial library at 9600 bps
+  Serial.begin(115200);           // set up Serial library
 
   AFMS.begin();  // create with the default frequency 1.6KHz
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
   
-  // Attach a servo to pin #10
+  // Attach a servo
   servo1.attach(10);
   servo1.write(90); // set servo to neutral
-   
-
    
 }
 
@@ -86,7 +84,7 @@ void Backward(){
  }
 
 void TakeOffAgain(){
-   servo1.write(50); // turn wheels right 
+   servo1.write(50); // turn wheels left 
    myMotor->setSpeed(MaxSpeed);    
    myMotor->run(FORWARD);
    delay(2000);
@@ -102,7 +100,7 @@ void loop() {
       MotorForward(); // default movement
   }
 
+// send things we care about to serial function
  SerialPrintStuff(FrontDistance());
  
-
 }
