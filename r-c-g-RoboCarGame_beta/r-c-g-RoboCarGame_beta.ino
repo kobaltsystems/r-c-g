@@ -30,7 +30,7 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
   int Wall = 50;
   int MaxSpeed = 100;
   int i;
-
+ 
 void setup() {
   Serial.begin(115200);           // set up Serial library
 
@@ -44,12 +44,15 @@ void setup() {
 }
 
 // Print data to serial for diagnostics
-void SerialPrintStuff(int ToPrint) {
+void SerialPrintStuff(int DistCM, int rawLight) {
   
   Serial.print("Ping: ");
-  Serial.print(ToPrint); // Convert ping time to distance in cm and print result (0 = outside set distance range)
-  Serial.println("cm");
-  
+  Serial.print(DistCM); // Convert ping time to distance in cm and print result (0 = outside set distance range)
+  Serial.print("cm");
+  Serial.print(" ||| ");
+  Serial.print("Light Level:");
+  Serial.println(rawLight, DEC);
+ 
 }
 
 // All sonar calcs to go here
@@ -61,7 +64,13 @@ int FrontDistance(){
 
 }
 
-// Motor control stuff here
+// all light readings and calcs
+int LightLevel(){
+  int rawLight = analogRead(A0); // set light pin
+  return rawLight; //send back raw light value 
+}
+
+// All Motor control stuff here
 void MotorForward(){
    myMotor->setSpeed(MaxSpeed);    
    myMotor->run(FORWARD);
@@ -101,6 +110,6 @@ void loop() {
   }
 
 // send things we care about to serial function
- SerialPrintStuff(FrontDistance());
+ SerialPrintStuff(FrontDistance(), LightLevel());
  
 }
