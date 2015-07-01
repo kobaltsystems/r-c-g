@@ -7,17 +7,14 @@
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_PWMServoDriver.h"
-#include <Servo.h> 
 #include <NewPing.h>
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 
 // And connect a DC motor
-Adafruit_DCMotor *myMotor = AFMS.getMotor(1);
-
-// Servo library
-Servo servo1;
+Adafruit_DCMotor *myMotor = AFMS.getMotor(2);
+Adafruit_DCMotor *mySteer = AFMS.getMotor(3);
 
 // ping sensor setup
 #define TRIGGER_PIN  2  // Arduino pin tied to trigger pin on the ultrasonic sensor.
@@ -28,7 +25,10 @@ NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and
 
 //global variables here
   int Wall = 50;
-  int MaxSpeed = 100;
+  int LightTrigger = 500;
+  int MaxSpeed = 75;
+  int HalfSpeed = 75;
+  int SteerPower =200;
   int i;
  
 void setup() {
@@ -36,10 +36,6 @@ void setup() {
 
   AFMS.begin();  // create with the default frequency 1.6KHz
   //AFMS.begin(1000);  // OR with a different frequency, say 1KHz
-  
-  // Attach a servo
-  servo1.attach(10);
-  servo1.write(90); // set servo to neutral
    
 }
 
@@ -72,7 +68,9 @@ int LightLevel(){
 
 // All Motor control stuff here
 void MotorForward(){
-   myMotor->setSpeed(MaxSpeed);    
+  mySteer->run(RELEASE); //set wheel straight
+
+  myMotor->setSpeed(MaxSpeed);    
    myMotor->run(FORWARD);
 }
 
@@ -83,29 +81,47 @@ void MotorStop(){
  }
 
 void Backward(){
-   servo1.write(130); // turn wheels right 
-   myMotor->setSpeed(MaxSpeed);    
+  mySteer->run(FORWARD); //turn one direction
+  mySteer->setSpeed(SteerPower);
+
+   myMotor->setSpeed(HalfSpeed);    
    myMotor->run(BACKWARD);
-   delay(2000);
-   servo1.write(90); 
-   MotorStop();   
-   TakeOffAgain();
+   delay(1000);
+
+  mySteer->run(BACKWARD); //turn the other direction
+  mySteer->setSpeed(SteerPower);
+  mySteer->run(RELEASE); //set wheel straight
+   
  }
 
 void TakeOffAgain(){
-   servo1.write(50); // turn wheels left 
+  mySteer->run(BACKWARD); //turn the other direction
+  mySteer->setSpeed(SteerPower);
+
    myMotor->setSpeed(MaxSpeed);    
    myMotor->run(FORWARD);
-   delay(2000);
-   servo1.write(90); 
+   delay(1000);
+
+  mySteer->run(FORWARD); //turn one direction
+  mySteer->setSpeed(SteerPower);
+  mySteer->run(RELEASE); //set wheel straight
+
  }
 
 void loop() {
+
+  if (LightLevel() > LightTrigger){
+       MotorStop();
+       Backward();
+  }
   
   if (FrontDistance() <= Wall){ 
        MotorStop();
        Backward();
-  }else{
+       MotorStop();
+       TakeOffAgain();
+        
+}else{
       MotorForward(); // default movement
   }
 
